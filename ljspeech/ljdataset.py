@@ -16,8 +16,7 @@ import torch, torch.nn as nn, torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 
 
-from .stts import audio, audio_util, util, textutil
-from . import preprocess
+from stts import audio, audio_util, util, textutil
 
 
 
@@ -108,40 +107,6 @@ class LJDataset(Dataset):
             
 
 
-    
-                    
-def attention_guide(text_lengths, mel_lengths, max_t=None, max_m=None, width=None):
-    if width is None:
-        width = self.guide_width
-    batch_size = len(text_lengths)
-    max_t = np.max(text_lengths) if max_t is None else max_t
-    max_m = np.max(mel_lengths) if max_m is None else max_m
-    guides = np.ones((batch_size, max_t, max_m), dtype=np.float32)
-    for b in range(batch_size):
-        len_t = text_lengths[b]
-        len_m = mel_lengths[b]
-        for t in range(len_m):
-            target = float(t) / len_m
-            for n in range(max_t):
-#                guides[b, n, t] = 1.0 - np.exp(-(float(n) / len_t - float(t) / len_m)**2 / 0.08)
-                guides[b, n, t] = max(np.abs(float(n) / len_t - target) - width / len_t, 0)
-        for t in range(len_m, max_m):
-            target = 1.0
-            for n in range(max_t):
-#                guides[b, n, t] = 1.0 - np.exp(-(float(n) / len_t - 1)**2 / 0.08)
-                guides[b, n, t] = max(np.abs(float(n) / len_t - target) - width / len_t, 0)
-    return guides
-            
-def attention_mask(text_lengths, mel_lengths, max_t=None, max_m=None):
-    batch_size = len(text_lengths)
-    max_t = np.max(text_lengths) if max_t is None else max_t
-    max_m = np.max(mel_lengths) if max_m is None else max_m    
-    masks = np.zeros((batch_size, max_t, max_m), dtype=np.float32)
-    for b in range(batch_size):
-        len_t = text_lengths[b]
-        len_m = mel_lengths[b]
-        masks[b,:,:len_m] = 1.0
-    return masks
                 
 
 

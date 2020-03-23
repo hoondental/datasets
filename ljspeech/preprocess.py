@@ -17,7 +17,7 @@ import torch, torch.nn as nn, torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 
 
-from .stts import audio, audio_util, util, textutil
+from stts import audio, audio_util, util, textutil
 
 def main():
     parser = argparse.ArgumentParser(description='stft LJSpeech dataset to mel and linear spectrogram')
