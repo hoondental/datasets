@@ -96,10 +96,6 @@ class LJDataset(Dataset):
             batch['spec'] = torch.tensor(specs, dtype=torch.float32)
         if self._mel:
             batch['mel'] = torch.tensor(mels, dtype=torch.float32)
-        if self._guide:
-            batch['guide'] = torch.tensor(attention_guide(text_lengths, n_frames, width=20), dtype=torch.float32)
-        if self._mask:
-            batch['mask'] = torch.tensor(attention_mask(text_lengths, n_frames), dtype=torch.float32)
         return batch
         
         
