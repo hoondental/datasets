@@ -31,8 +31,6 @@ class LJDataset(Dataset):
         self.pad = textutil._char_vocab[0]
         self.sos = textutil._char_vocab[1]
         self.eos = textutil._char_vocab[2]
-        self.use_phone = use_phone
-        self.use_stress = use_stress
         self.meta_dir = os.path.dirname(meta_path)
         
         with open(meta_path, 'r') as f:
