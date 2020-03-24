@@ -1,6 +1,6 @@
 import os
 import sys
-sys.append(os.path.dirname(__file__))
+sys.path.append(os.path.dirname(__file__))
 #sys.path.append('..')
 #sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 import math
@@ -22,12 +22,15 @@ from stts import audio, audio_util, util, textutil
 
 
 class LJDataset(Dataset):
-    def __init__(self, meta_path, _spec=True, _mel=True, stride=1, add_sos=False, add_eos=False, use_phone=False, use_stress=False):
+    def __init__(self, meta_path, _spec=True, _mel=True, stride=1, add_sos=False, add_eos=False):
         self._spec = _spec
         self._mel = _mel
         self.stride = stride
         self.add_sos = add_sos
         self.add_eos = add_eos
+        self.pad = textutil._char_vocab[0]
+        self.sos = textutil._char_vocab[1]
+        self.eos = textutil._char_vocab[2]
         self.use_phone = use_phone
         self.use_stress = use_stress
         self.meta_dir = os.path.dirname(meta_path)
@@ -54,13 +57,12 @@ class LJDataset(Dataset):
         text = meta[1]
         n_frame = meta[2]
         text = textutil.text_normalize(text)
-        if self.use_phone:
-            if self.use_stress:
-                pass
-            else:
-                pass
-        else:
-            text = np.array(textutil.char2idx(text), dtype=np.int64)
+        if self.add_sos:
+            text = self.sos + text
+        if self.add_eos:
+            text = text + self.eos
+
+        text = np.array(textutil.char2idx(text), dtype=np.int64)
         sample = {'idx':idx, 'text':text, 'n_text':len(text), 'n_frame':math.ceil(n_frame/self.stride)}
         if self._spec:
             sample['spec'] = np.load(spec_path)[...,::self.stride]
