@@ -14,7 +14,7 @@ from stts import audio, audio_util, util, textutil
 
 
 class Mel2TextDataset(Dataset):
-    def __init__(self, meta_path, _mel=True, _mp=True, _tp=False, _m2c=False, _mpwin=False, _m2cwin_path=False, 
+    def __init__(self, meta_path, _mel=True, _mp=True, _tp=False, _m2c=False, _mpwin=False, _m2cwin=False, 
                  stride=1, text_upsample=1, add_sos=False, add_eos=False):
         self._mel = _mel
         self._mp = _mp
