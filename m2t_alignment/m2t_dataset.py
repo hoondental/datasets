@@ -56,6 +56,7 @@ class Mel2TextDataset(Dataset):
         mpwin_path = os.path.join(self.meta_dir, mpwin_path)
         m2cwin_path = os.path.join(self.meta_dir, m2cwin_path)
         
+        text = textutil.text_normalize(text)
         if self.add_sos:
             text = self.sos + text
         if self.add_eos:
