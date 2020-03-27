@@ -113,8 +113,8 @@ class LJDataset(Dataset):
             if self._mel:
                 mels.append(np.pad(s['mel'], ((0, 0), (0, max_n_frame - n_frames[i])), constant_values=0.0))    
             if self._phone:
-                phones1.append(np.pad(s['phone1'], (0, max_n_phone1 - n_phones[i]), constant_values=0))
-                phones2.append(np.pad(s['phone2'],((0, 0), (0, max_n_phone2 - n_phones[i])), constant_values=0))
+                phones1.append(np.pad(s['phone1'], (0, max_n_phone1 - n_phones1[i]), constant_values=0))
+                phones2.append(np.pad(s['phone2'],((0, 0), (0, max_n_phone2 - n_phones2[i])), constant_values=0))
                                
                 
         batch = {'idx':torch.tensor(idxes, dtype=torch.int64), 
@@ -128,8 +128,8 @@ class LJDataset(Dataset):
         if self._phone:
             batch['phone1'] = torch.tensor(phones1, dtype=torch.int64)
             batch['phone2'] = torch.tensor(phones2, dtype=torch.int64)
-            batch['n_phone1'] = torch.tensor(n_phones, dtype=torch.int32)
-            batch['n_phone2'] = torch.tensor(n_phones, dtype=torch.int32)
+            batch['n_phone1'] = torch.tensor(n_phones1, dtype=torch.int32)
+            batch['n_phone2'] = torch.tensor(n_phones2, dtype=torch.int32)
         return batch
         
         
