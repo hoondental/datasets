@@ -22,15 +22,13 @@ from stts import audio, audio_util, util, textutil
 
 
 class LJDataset(Dataset):
-    def __init__(self, meta_path, _spec=True, _mel=True, stride=1, add_sos=False, add_eos=False):
+    def __init__(self, meta_path, _spec=True, _mel=True, _phone=False, stride=1, add_sos=False, add_eos=False):
         self._spec = _spec
         self._mel = _mel
+        self._phone = _phone
         self.stride = stride
         self.add_sos = add_sos
         self.add_eos = add_eos
-        self.pad = textutil._char_vocab[0]
-        self.sos = textutil._char_vocab[1]
-        self.eos = textutil._char_vocab[2]
         self.meta_dir = os.path.dirname(meta_path)
         
         with open(meta_path, 'r') as f:
@@ -38,11 +36,11 @@ class LJDataset(Dataset):
         self.len = len(lines)
         self.meta = []
         for i, t in enumerate(lines):
-            fname, ntext, n_frame, spec_path, mel_path = t.split('|')
+            fname, text, n_frame, spec_path, mel_path = t.split('|')
             n_frame = int(n_frame)
             if mel_path.endswith('\n'):
                 mel_path = mel_path[:-1]
-            self.meta.append((fname, ntext, n_frame, os.path.join(self.meta_dir, spec_path), os.path.join(self.meta_dir, mel_path)))
+            self.meta.append((fname, text, n_frame, os.path.join(self.meta_dir, spec_path), os.path.join(self.meta_dir, mel_path)))
             
             
     def __len__(self):
@@ -52,35 +50,56 @@ class LJDataset(Dataset):
         meta = self.meta[idx]
         spec_path = meta[3]
         mel_path = meta[4]
-        text = meta[1]
+        _text = meta[1]
         n_frame = meta[2]
-        text = textutil.text_normalize(text)
+        _text = textutil.text_normalize(_text)
+        text = textutil.char2idx(_text)
+        if self._phone:
+            _phone = textutil.text2phone(_text)
+            phone1 = textutil.phone2idx(_phone)
+            phone2 = textutil.phone2idx2(_phone)
         if self.add_sos:
-            text = self.sos + text
+            text = [1] + text 
+            if self._phone:
+                phone1 = [1] + phone1
+                phone2 = [(1, 0)] + phone2
         if self.add_eos:
-            text = text + self.eos
-
+            text = text + [2]
+            if self._phone:
+                phone1 = phone1 + [2]
+                phone2 = phone2 + [(2, 0)]
+        
         text = np.array(textutil.char2idx(text), dtype=np.int64)
         sample = {'idx':idx, 'text':text, 'n_text':len(text), 'n_frame':math.ceil(n_frame/self.stride)}
         if self._spec:
             sample['spec'] = np.load(spec_path)[...,::self.stride]
         if self._mel:
             sample['mel'] = np.load(mel_path)[...,::self.stride]        
+        if self._phone:
+            sample['phone1'] = phone1
+            sample['phone2'] = phone2           
         return sample
             
     def collate(self, samples):
         text_lengths = []
+        n_phones = []
         n_frames = []
         idxes = []
         texts = []
         specs = []
         mels = []
+        phones1 = []
+        phones2 = []
         for i, s in enumerate(samples):
             text_lengths.append(s['n_text'])
             n_frames.append(s['n_frame'])
             idxes.append(s['idx'])
+            if self._phone:
+                n_phones.append(len(s['phone1']))
         max_text_len = max(text_lengths)
         max_n_frame = max(n_frames)
+        if self._phone:
+            max_n_phone = max(n_phones)
         
         for i, s in enumerate(samples):
             texts.append(np.pad(s['text'], (0, max_text_len - text_lengths[i]), constant_values=0))
@@ -88,6 +107,10 @@ class LJDataset(Dataset):
                 specs.append(np.pad(s['spec'], ((0, 0), (0, max_n_frame - n_frames[i])), constant_values=0.0))
             if self._mel:
                 mels.append(np.pad(s['mel'], ((0, 0), (0, max_n_frame - n_frames[i])), constant_values=0.0))    
+            if self._phone:
+                phones1.append(np.pad(s['phone1'], (0, max_n_phone - n_phones[i]), constant_values=0))
+                phones2.append(np.pad(s['phone2'], (0, max_n_phone - n_phones[i]), constant_values=0))
+                               
                 
         batch = {'idx':torch.tensor(idxes, dtype=torch.int64), 
                  'text':torch.tensor(texts, dtype=torch.int64), 
@@ -97,6 +120,9 @@ class LJDataset(Dataset):
             batch['spec'] = torch.tensor(specs, dtype=torch.float32)
         if self._mel:
             batch['mel'] = torch.tensor(mels, dtype=torch.float32)
+        if self._phone:
+            batch['phone1'] = torch.tensor(phones1, dtype=torch.int64)
+            batch['phone2'] = torch.tensor(phones2, dtype=torch.int64)
         return batch
         
         
