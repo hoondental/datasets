@@ -78,13 +78,13 @@ class Mel2TextDataset(Dataset):
             assert tp.shape[0] == len(text) * self.text_upsample
         if self._m2c:
             m2c = np.load(m2c_path)
-            sampe['m2c'] = m2c
+            sample['m2c'] = m2c
         if self._mpwin:
             mp = np.load(mpwin_path)
             sample['mpwin'] = mp
         if self._m2cwin:
             m2c = np.load(m2cwin_path)
-            sampe['m2cwin'] = m2cwin
+            sample['m2cwin'] = m2cwin
         sample['n_text'] = len(text)
         sample['n_frame'] = mel.shape[-1]
         return sample
