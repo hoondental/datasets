@@ -80,10 +80,10 @@ class Mel2TextDataset(Dataset):
             m2c = np.load(m2c_path)
             sample['m2c'] = m2c
         if self._mpwin:
-            mp = np.load(mpwin_path)
-            sample['mpwin'] = mp
+            mpwin = np.load(mpwin_path)
+            sample['mpwin'] = mpwin
         if self._m2cwin:
-            m2c = np.load(m2cwin_path)
+            m2cwin = np.load(m2cwin_path)
             sample['m2cwin'] = m2cwin
         sample['n_text'] = len(text)
         sample['n_frame'] = mel.shape[-1]
