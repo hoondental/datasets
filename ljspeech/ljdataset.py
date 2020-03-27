@@ -77,12 +77,15 @@ class LJDataset(Dataset):
             sample['mel'] = np.load(mel_path)[...,::self.stride]        
         if self._phone:
             sample['phone1'] = np.array(phone1, dtype=np.int64)
-            sample['phone2'] = np.array(phone2, dtype=np.int64)           
+            sample['phone2'] = np.array(phone2, dtype=np.int64).T    
+            sample['n_phone1'] = len(phone1)
+            sample['n_phone2'] = len(phone2)
         return sample
             
     def collate(self, samples):
         text_lengths = []
-        n_phones = []
+        n_phones1 = []
+        n_phones2 = []
         n_frames = []
         idxes = []
         texts = []
@@ -95,7 +98,8 @@ class LJDataset(Dataset):
             n_frames.append(s['n_frame'])
             idxes.append(s['idx'])
             if self._phone:
-                n_phones.append(len(s['phone1']))
+                n_phones1.append(s['n_phone1'])
+                n_phones2.append(s['n_phone2'])
         max_text_len = max(text_lengths)
         max_n_frame = max(n_frames)
         if self._phone:
@@ -109,7 +113,7 @@ class LJDataset(Dataset):
                 mels.append(np.pad(s['mel'], ((0, 0), (0, max_n_frame - n_frames[i])), constant_values=0.0))    
             if self._phone:
                 phones1.append(np.pad(s['phone1'], (0, max_n_phone - n_phones[i]), constant_values=0))
-                phones2.append(np.pad(s['phone2'], (0, max_n_phone - n_phones[i]), constant_values=0))
+                phones2.append(np.pad(s['phone2'],((0, 0), (0, max_n_phone - n_phones[i])), constant_values=0))
                                
                 
         batch = {'idx':torch.tensor(idxes, dtype=torch.int64), 
@@ -123,6 +127,8 @@ class LJDataset(Dataset):
         if self._phone:
             batch['phone1'] = torch.tensor(phones1, dtype=torch.int64)
             batch['phone2'] = torch.tensor(phones2, dtype=torch.int64)
+            batch['n_phone1'] = torch.tensor(n_phones, dtype=torch.int32)
+            batch['n_phone2'] = torch.tensor(n_phones, dtype=torch.int32)
         return batch
         
         
