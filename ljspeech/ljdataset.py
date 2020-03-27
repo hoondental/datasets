@@ -69,15 +69,15 @@ class LJDataset(Dataset):
                 phone1 = phone1 + [2]
                 phone2 = phone2 + [(2, 0)]
         
-        text = np.array(textutil.char2idx(text), dtype=np.int64)
+        text = np.array(text, dtype=np.int64)
         sample = {'idx':idx, 'text':text, 'n_text':len(text), 'n_frame':math.ceil(n_frame/self.stride)}
         if self._spec:
             sample['spec'] = np.load(spec_path)[...,::self.stride]
         if self._mel:
             sample['mel'] = np.load(mel_path)[...,::self.stride]        
         if self._phone:
-            sample['phone1'] = phone1
-            sample['phone2'] = phone2           
+            sample['phone1'] = np.array(phone1, dtype=np.int64)
+            sample['phone2'] = np.array(phone2, dtype=np.int64)           
         return sample
             
     def collate(self, samples):
