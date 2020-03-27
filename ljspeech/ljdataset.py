@@ -103,7 +103,8 @@ class LJDataset(Dataset):
         max_text_len = max(text_lengths)
         max_n_frame = max(n_frames)
         if self._phone:
-            max_n_phone = max(n_phones)
+            max_n_phone1 = max(n_phones1)
+            max_n_phone2 = max(n_phones2)
         
         for i, s in enumerate(samples):
             texts.append(np.pad(s['text'], (0, max_text_len - text_lengths[i]), constant_values=0))
@@ -112,8 +113,8 @@ class LJDataset(Dataset):
             if self._mel:
                 mels.append(np.pad(s['mel'], ((0, 0), (0, max_n_frame - n_frames[i])), constant_values=0.0))    
             if self._phone:
-                phones1.append(np.pad(s['phone1'], (0, max_n_phone - n_phones[i]), constant_values=0))
-                phones2.append(np.pad(s['phone2'],((0, 0), (0, max_n_phone - n_phones[i])), constant_values=0))
+                phones1.append(np.pad(s['phone1'], (0, max_n_phone1 - n_phones[i]), constant_values=0))
+                phones2.append(np.pad(s['phone2'],((0, 0), (0, max_n_phone2 - n_phones[i])), constant_values=0))
                                
                 
         batch = {'idx':torch.tensor(idxes, dtype=torch.int64), 
