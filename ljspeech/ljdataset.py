@@ -105,11 +105,11 @@ class LJDataset(Dataset):
 
         text = np.array(_text, dtype=np.int64)
         sample = {'idx':idx, 'text':text, 'n_text':self._n_text[idx], 'n_frame':self._n_frame[idx]}
-        if self._spec:
+        if self.use_spec:
             sample['spec'] = self._spec[idx] if self.in_memory else np.load(spec_path)[...,::self.stride]
-        if self._mel:
+        if self.use_mel:
             sample['mel'] = self._mel[idx] if self.in_memory else np.load(mel_path)[...,::self.stride]        
-        if self._phone:
+        if self.use_phone:
             sample['phone1'] = np.array(self._phone1[idx], dtype=np.int64)
             sample['phone2'] = np.array(self._phone2[idx], dtype=np.int64).T    
             sample['n_phone1'] = self._n_phone[idx]
