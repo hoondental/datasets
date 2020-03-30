@@ -54,21 +54,21 @@ class LJDataset(Dataset):
             _mel_path = os.path.join(self.meta_dir, mel_path)
             self.meta.append((fname, text, _spec_path, _mel_path))
             
-            _script = list(textutil.text_normalize(text))
+            _script = textutil.text_normalize(text)
             _text = textutil.char2idx(_script)
             if use_phone:
                 _phone = textutil.text2phone(_script)
                 _phone1 = textutil.phone2idx(_phone)
                 _phone2 = textutil.phone2idx2(_phone)
             if self.add_sos:
-                _script = [self.sos] + _script
+                _script = self.sos + _script
                 _text = [1] + _text 
                 if use_phone:
                     _phone = [self.sos] + _phone
                     _phone1 = [1] + _phone1
                     _phone2 = [(1, 0)] + _phone2
             if self.add_eos:
-                _script = [self.eos] + _script
+                _script = self.eos + _script
                 _text = [2] + _text 
                 if use_phone:
                     _phone = [self.eos] + _phone
