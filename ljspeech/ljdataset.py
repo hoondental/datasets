@@ -131,22 +131,22 @@ class LJDataset(Dataset):
             text_lengths.append(s['n_text'])
             n_frames.append(s['n_frame'])
             idxes.append(s['idx'])
-            if self._phone:
+            if self.use_phone:
                 n_phones1.append(s['n_phone1'])
                 n_phones2.append(s['n_phone2'])
         max_text_len = max(text_lengths)
         max_n_frame = max(n_frames)
-        if self._phone:
+        if self.use_phone:
             max_n_phone1 = max(n_phones1)
             max_n_phone2 = max(n_phones2)
         
         for i, s in enumerate(samples):
             texts.append(np.pad(s['text'], (0, max_text_len - text_lengths[i]), constant_values=0))
-            if self._spec:
+            if self.use_spec:
                 specs.append(np.pad(s['spec'], ((0, 0), (0, max_n_frame - n_frames[i])), constant_values=0.0))
-            if self._mel:
+            if self.use_mel:
                 mels.append(np.pad(s['mel'], ((0, 0), (0, max_n_frame - n_frames[i])), constant_values=0.0))    
-            if self._phone:
+            if self.use_phone:
                 phones1.append(np.pad(s['phone1'], (0, max_n_phone1 - n_phones1[i]), constant_values=0))
                 phones2.append(np.pad(s['phone2'],((0, 0), (0, max_n_phone2 - n_phones2[i])), constant_values=0))
                                
