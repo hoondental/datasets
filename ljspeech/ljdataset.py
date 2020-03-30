@@ -54,7 +54,7 @@ class LJDataset(Dataset):
             _mel_path = os.path.join(self.meta_dir, mel_path)
             self.meta.append((fname, text, _spec_path, _mel_path))
             
-            _script = list(textutil.normalize(text))
+            _script = list(textutil.text_normalize(text))
             _text = textutil.char2idx(_script)
             if use_phone:
                 _phone = textutil.text2phone(_script)
