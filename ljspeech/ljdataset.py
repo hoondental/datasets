@@ -155,11 +155,11 @@ class LJDataset(Dataset):
                  'text':torch.tensor(texts, dtype=torch.int64), 
                  'n_text':torch.tensor(text_lengths, dtype=torch.int32),
                  'n_frame':torch.tensor(n_frames, dtype=torch.int32)}
-        if self._spec:
+        if self.use_spec:
             batch['spec'] = torch.tensor(specs, dtype=torch.float32)
-        if self._mel:
+        if self.use_mel:
             batch['mel'] = torch.tensor(mels, dtype=torch.float32)
-        if self._phone:
+        if self.use_phone:
             batch['phone1'] = torch.tensor(phones1, dtype=torch.int64)
             batch['phone2'] = torch.tensor(phones2, dtype=torch.int64)
             batch['n_phone1'] = torch.tensor(n_phones1, dtype=torch.int32)
