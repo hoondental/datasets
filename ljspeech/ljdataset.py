@@ -99,8 +99,8 @@ class LJDataset(Dataset):
     
     def __getitem__(self, idx):
         meta = self.meta[idx]
-        _spec_path = meta[3]
-        _mel_path = meta[4]
+        _spec_path = meta[2]
+        _mel_path = meta[3]
         _text = self._text[idx]
 
         text = np.array(_text, dtype=np.int64)
