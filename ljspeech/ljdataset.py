@@ -27,13 +27,16 @@ class LJDataset(Dataset):
         self.use_mel = use_mel
         self.use_phone = use_phone
         self.stride = stride
+        
         self.add_sos = add_sos
         self.add_eos = add_eos
         self.pad = textutil._char_vocab[0]
         self.sos = textutil._char_vocab[1]
         self.eos = textutil._char_vocab[2]
+        
         self.in_memory = in_memory
         self.meta_dir = os.path.dirname(meta_path)
+        self.meta_path = meta_path
         
         self._script = []
         self._text = []
