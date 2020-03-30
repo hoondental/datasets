@@ -114,7 +114,7 @@ def process_wavfiles(meta, out_dir, sample_rate=22050, trim_db=None, mono=True, 
                                            spec_paths, None, mel_paths, decibel, normalize)
     with open(meta_path, 'w') as f: 
         for i, m in enumerate(_meta):
-            f.write(m[0] + '|' + m[1] + '|' + str(n_frames[i]) + '|' + m[2] + '|' + m[3] + '\n')
+            f.write(m[0] + '|' + m[1] + '|' + m[2] + '|' + m[3] + '\n')
             
     with open(os.path.join(out_dir, 'settings.txt'), 'w') as f:
         f.write('sample_rate:' + str(sample_rate) + '\n')
