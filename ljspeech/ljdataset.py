@@ -29,6 +29,9 @@ class LJDataset(Dataset):
         self.stride = stride
         self.add_sos = add_sos
         self.add_eos = add_eos
+        self.pad = textutil._char_vocab[0]
+        self.sos = textutil._char_vocab[1]
+        self.eos = textutil._char_vocab[2]
         self.in_memory = in_memory
         self.meta_dir = os.path.dirname(meta_path)
         
@@ -38,9 +41,6 @@ class LJDataset(Dataset):
         self._phone2 = []
         self._mel = []
         self._spec = []
-        self._n_text = []
-        self._n_phone = []
-        self._n_frame = []
         
         with open(meta_path, 'r') as f:
             lines = f.readlines()
@@ -61,38 +61,32 @@ class LJDataset(Dataset):
                 _phone1 = textutil.phone2idx(_phone)
                 _phone2 = textutil.phone2idx2(_phone)
             if self.add_sos:
-                _script = [textutil._char_vocab[1]] + _script
+                _script = [self.sos] + _script
                 _text = [1] + _text 
                 if use_phone:
-                    _phone = [textutil._char_vocab[1]] + _phone
+                    _phone = [self.sos] + _phone
                     _phone1 = [1] + _phone1
                     _phone2 = [(1, 0)] + _phone2
             if self.add_eos:
-                _script = [textutil._char_vocab[2]] + _script
+                _script = [self.eos] + _script
                 _text = [2] + _text 
                 if use_phone:
-                    _phone = [textutil._char_vocab[2]] + _phone
+                    _phone = [self.eos] + _phone
                     _phone1 = [2] + _phone1
                     _phone2 = [(2, 0)] + _phone2
             self._script.append(_script)
             self._text.append(_text)
-            self._n_text.append(len(_text))
             if use_phone:
                 self._phone.append(_phone)
                 self._phone1.append(_phone1)
                 self._phone2.append(_phone2)
-                self._n_phone.append(len(_phone))
             if in_memory:
-                _n_frame = 0
                 if use_spec:
                     _spec = np.load(_spec_path)[...,::self.stride]
                     self._spec.append(_spec) 
-                    _n_frame = _spec.shape[-1]
                 if use_mel:
                     _mel = np.load(_mel_path)[...,::self.stride]
-                    self._mel.append(_mel) 
-                    _n_frame = _mel.shape[-1]
-                self._n_frame.append(_n_frame)           
+                    self._mel.append(_mel)         
             
     def __len__(self):
         return self.len
@@ -103,17 +97,25 @@ class LJDataset(Dataset):
         _mel_path = meta[3]
         _text = self._text[idx]
 
-        text = np.array(_text, dtype=np.int64)
-        sample = {'idx':idx, 'text':text, 'n_text':self._n_text[idx], 'n_frame':self._n_frame[idx]}
+        _text = np.array(_text, dtype=np.int64)
+        _n_frame = 0
+        sample = {'idx':idx, 'text':_text, 'n_text':len(_text)}
         if self.use_spec:
-            sample['spec'] = self._spec[idx] if self.in_memory else np.load(spec_path)[...,::self.stride]
+            _spec = self._spec[idx] if self.in_memory else np.load(spec_path)[...,::self.stride]
+            _n_frame = _spec.shape[-1]
+            sample['spec'] = _spec
         if self.use_mel:
-            sample['mel'] = self._mel[idx] if self.in_memory else np.load(mel_path)[...,::self.stride]        
+            _mel = self._mel[idx] if self.in_memory else np.load(mel_path)[...,::self.stride]        
+            _n_frame = _mel.shape[-1]
+            sample['mel'] = _mel
+        sample['n_frame'] = _n_frame
         if self.use_phone:
-            sample['phone1'] = np.array(self._phone1[idx], dtype=np.int64)
-            sample['phone2'] = np.array(self._phone2[idx], dtype=np.int64).T    
-            sample['n_phone1'] = self._n_phone[idx]
-            sample['n_phone2'] = self._n_phone[idx]
+            _phone1 = np.array(self._phone1[idx], dtype=np.int64)
+            _phone2 = np.array(self._phone2[idx], dtype=np.int64).T    
+            sample['phone1'] = _phone1
+            sample['phone2'] = _phone2
+            sample['n_phone1'] = len(_phone1)
+            sample['n_phone2'] = len(_phone2)
         return sample
             
     def collate(self, samples):
