@@ -65,7 +65,7 @@ class Mel2TextDataset(Dataset):
             self._text.append(_text)
             if in_memory:
                 if use_mel:
-                    _mel = np.load(_mel_path[...,::self.stride])
+                    _mel = np.load(_mel_path)[...,::self.stride]
                     self._mel.append(_mel)
                 if use_mp:
                     _mp = np.load(_mp_path)
