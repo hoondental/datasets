@@ -107,7 +107,7 @@ class Mel2TextDataset(Dataset):
         if self.use_m2c:
             _m2c = self._m2c[idx] if self.in_memory else np.load(_m2c_path)
             _n_frame = _m2c.shape[-1]
-            sample['_m2c'] = _m2c
+            sample['m2c'] = _m2c
         sample['n_frame'] = _n_frame
         return sample
     
