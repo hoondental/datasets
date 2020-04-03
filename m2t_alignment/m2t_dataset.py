@@ -53,7 +53,7 @@ class Mel2TextDataset(Dataset):
         self.len = len(lines)
         self.meta = []
         for i, t in enumerate(lines):
-            fname, n_frame mel_path, mp_path, tp_path, m2c_path, ntext= t.split('|')
+            fname, n_frame, mel_path, mp_path, tp_path, m2c_path, ntext= t.split('|')
             if ntext.endswith('\n'):
                 ntext = ntext[:-1]
             self.meta.append((fname, ntext, n_frame, mel_path, mp_path, tp_path, m2c_path))
