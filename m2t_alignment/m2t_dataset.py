@@ -9,7 +9,10 @@ import time
 import torch, torch.nn as nn, torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 
-from .stts import audio, audio_util, util, textutil
+if __package__ == '':
+    from stts import audio, audio_util, util, textutil
+else:
+    from .stts import audio, audio_util, util, textutil
 
 
 
@@ -32,13 +35,14 @@ class Mel2TextDataset(Dataset):
         self.in_memory = in_memory
         self.meta_dir = os.path.dirname(meta_path)
         self.meta_path = meta_path
-        
+                
         self._script = []
         self._text = []
         self._mel = []
         self._mp = []
         self._tp = []
         self._m2c = []
+        self._n_frame = []
         
         with open(meta_path, 'r') as f:
             lines = f.readlines()

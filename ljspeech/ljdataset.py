@@ -15,9 +15,14 @@ from shutil import copyfile
 
 import torch, torch.nn as nn, torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
+from torch.utils.data.sampler import Sampler
+import random
 
 
-from .stts import audio, audio_util, util, textutil
+if __package__ == '':
+    from stts import audio, audio_util, util, textutil
+else:
+    from .stts import audio, audio_util, util, textutil
 
 
 
@@ -38,24 +43,32 @@ class LJDataset(Dataset):
         self.meta_dir = os.path.dirname(meta_path)
         self.meta_path = meta_path
         
+        self.meta = []
         self._script = []
         self._text = []
         self._phone1 = []
         self._phone2 = []
         self._mel = []
         self._spec = []
+        self._mel_path = []
+        self._spec_path = []
+        self._n_frame = []
         
         with open(meta_path, 'r') as f:
             lines = f.readlines()
         self.len = len(lines)
-        self.meta = []
+        
         for i, t in enumerate(lines):
-            fname, text, spec_path, mel_path = t.split('|')
+            fname, text, n_frame, spec_path, mel_path = t.split('|')
             if mel_path.endswith('\n'):
                 mel_path = mel_path[:-1]
+            self.meta.append((fname, text, n_frame, spec_path, mel_path))
+            
             _spec_path = os.path.join(self.meta_dir, spec_path)
             _mel_path = os.path.join(self.meta_dir, mel_path)
-            self.meta.append((fname, text, _spec_path, _mel_path))
+            self._spec_path.append(_spec_path)
+            self._mel_path.append(_mel_path)
+            self._n_frame.append(n_frame)
             
             _script = textutil.text_normalize(text)
             _text = textutil.char2idx(_script)
@@ -96,8 +109,8 @@ class LJDataset(Dataset):
     
     def __getitem__(self, idx):
         meta = self.meta[idx]
-        _spec_path = meta[2]
-        _mel_path = meta[3]
+        _spec_path = self._spec_path[idx]
+        _mel_path = self._mel_path[idx]
         _text = self._text[idx]
 
         _text = np.array(_text, dtype=np.int64)
@@ -170,13 +183,40 @@ class LJDataset(Dataset):
             batch['n_phone1'] = torch.tensor(n_phones1, dtype=torch.int32)
             batch['n_phone2'] = torch.tensor(n_phones2, dtype=torch.int32)
         return batch
+    
+    def get_length_sampler(self, batch_size, noise=10.0, shuffle=True):
+        sampler = LengthSampler(self._n_frame, batch_size, noise, shuffle)
+        return sampler
         
         
+class LengthSampler(Sampler):
+    def __init__(self, lengths, batch_size, noise=10.0, shuffle=True):
+        self.lengths = lengths
+        self.batch_size = batch_size
+        self.noise = noise
+        self.shuffle = shuffle
         
-            
+    def __len__(self):
+        return len(self.lengths)
+    
+    def __iter__(self):
+        _lengths = torch.tensor(self.lengths, dtype=torch.float32)
+        _lengths = _lengths + 2 * self.noise * torch.rand_like(_lengths)
+        _sorted, _idx = torch.sort(_lengths)
+        
+        if self.shuffle:
+            _len = len(_lengths)
+            _num_full_batches = _len // self.batch_size
+            _full_batch_size = _num_full_batches * self.batch_size
+            _full_batch_idx = _idx[:_full_batch_size]
+            _remnant_idx = _idx[_full_batch_size:]
+            _rand_batch_idx = torch.randperm(_num_full_batches)
+            _rand_full_idx = _full_batch_idx.reshape(_num_full_batches, self.batch_size)[_rand_batch_idx].reshape(-1) 
+            _rand_idx = torch.cat([_rand_full_idx, _remnant_idx], dim=0)
+            return iter(_rand_idx)
+        else:
+            return iter(_idx)
 
-
-                
 
 
 
