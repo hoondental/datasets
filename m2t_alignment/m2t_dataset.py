@@ -42,6 +42,10 @@ class Mel2TextDataset(Dataset):
         self._mp = []
         self._tp = []
         self._m2c = []
+        self._mel_path = []
+        self._mp_path = []
+        self._tp_path = []
+        self._m2c_path = []
         self._n_frame = []
         
         with open(meta_path, 'r') as f:
@@ -49,14 +53,20 @@ class Mel2TextDataset(Dataset):
         self.len = len(lines)
         self.meta = []
         for i, t in enumerate(lines):
-            fname, mel_path, mp_path, tp_path, m2c_path, text, ntext= t.split('|')
+            fname, n_frame mel_path, mp_path, tp_path, m2c_path, ntext= t.split('|')
             if ntext.endswith('\n'):
                 ntext = ntext[:-1]
+            self.meta.append((fname, ntext, n_frame, mel_path, mp_path, tp_path, m2c_path))
             _mel_path = os.path.join(self.meta_dir, mel_path)
             _mp_path = os.path.join(self.meta_dir, mp_path)
             _tp_path = os.path.join(self.meta_dir, tp_path)          
             _m2c_path = os.path.join(self.meta_dir, m2c_path)
-            self.meta.append((fname, text, ntext, _mel_path, _mp_path, _tp_path, _m2c_path))
+            self._mel_path.append(_mel_path)
+            self._mp_path.append(_mp_path)
+            self._tp_path.append(_tp_path)
+            self._m2c_path.append(_m2c_path)
+            self._n_frame.append(n_frame)
+            
             _script = ntext
             _text = textutil.char2idx(_script)
             if self.add_sos:
@@ -85,9 +95,7 @@ class Mel2TextDataset(Dataset):
     def __len__(self):
         return self.len
     
-    def __getitem__(self, idx):
-        meta = self.meta[idx]
-        fname, text, ntext, _mel_path, _mp_path, _tp_path, _m2c_path = meta        
+    def __getitem__(self, idx):  
         _text = self._text[idx]
                 
         _text = np.array(_text, dtype=np.int64)
@@ -95,21 +103,21 @@ class Mel2TextDataset(Dataset):
         sample = {'idx':idx, 'text':_text, 'n_text':len(_text)}        
        
         if self.use_mel:
-            _mel = self._mel[idx] if self.in_memory else np.load(_mel_path)[...,::self.stride]
+            _mel = self._mel[idx] if self.in_memory else np.load(self._mel_path[idx])[...,::self.stride]
             _n_frame = _mel.shape[-1]
             sample['mel'] = _mel
         if self.use_mp:
-            _mp = self._mp[idx] if self.in_memory else np.load(_mp_path)
+            _mp = self._mp[idx] if self.in_memory else np.load(self._mp_path[idx])
             _n_frame = _mp.shape[-1]
             sample['mp'] = _mp
             assert _mp.shape[0] == len(_text) * self.text_upsample
         if self.use_tp:
-            _tp = self._tp[idx] if self.in_memory else np.load(_tp_path)
+            _tp = self._tp[idx] if self.in_memory else np.load(self._tp_path[idx])
             _n_frame = _tp.shape[-1]
             sample['tp'] = _tp
             assert _tp.shape[0] == len(_text) * self.text_upsample
         if self.use_m2c:
-            _m2c = self._m2c[idx] if self.in_memory else np.load(_m2c_path)
+            _m2c = self._m2c[idx] if self.in_memory else np.load(self._m2c_path[idx])
             _n_frame = _m2c.shape[-1]
             sample['m2c'] = _m2c
         sample['n_frame'] = _n_frame
@@ -157,5 +165,38 @@ class Mel2TextDataset(Dataset):
         if self.use_m2c:
             batch['m2c'] = torch.tensor(m2cs, dtype=torch.float32)
         return batch
+    
+    def get_length_sampler(self, batch_size, noise=10.0, shuffle=True):
+        sampler = LengthSampler(self._n_frame, batch_size, noise, shuffle)
+        return sampler
+        
+        
+class LengthSampler(Sampler):
+    def __init__(self, lengths, batch_size, noise=10.0, shuffle=True):
+        self.lengths = lengths
+        self.batch_size = batch_size
+        self.noise = noise
+        self.shuffle = shuffle
+        
+    def __len__(self):
+        return len(self.lengths)
+    
+    def __iter__(self):
+        _lengths = torch.tensor(self.lengths, dtype=torch.float32)
+        _lengths = _lengths + 2 * self.noise * torch.rand_like(_lengths)
+        _sorted, _idx = torch.sort(_lengths)
+        
+        if self.shuffle:
+            _len = len(_lengths)
+            _num_full_batches = _len // self.batch_size
+            _full_batch_size = _num_full_batches * self.batch_size
+            _full_batch_idx = _idx[:_full_batch_size]
+            _remnant_idx = _idx[_full_batch_size:]
+            _rand_batch_idx = torch.randperm(_num_full_batches)
+            _rand_full_idx = _full_batch_idx.reshape(_num_full_batches, self.batch_size)[_rand_batch_idx].reshape(-1) 
+            _rand_idx = torch.cat([_rand_full_idx, _remnant_idx], dim=0)
+            return iter(_rand_idx)
+        else:
+            return iter(_idx)
             
             

@@ -108,7 +108,6 @@ class LJDataset(Dataset):
         return self.len
     
     def __getitem__(self, idx):
-        meta = self.meta[idx]
         _spec_path = self._spec_path[idx]
         _mel_path = self._mel_path[idx]
         _text = self._text[idx]
