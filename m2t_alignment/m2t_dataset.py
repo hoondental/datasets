@@ -8,6 +8,7 @@ import numpy as np
 import time
 import torch, torch.nn as nn, torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
+from torch.utils.data.sampler import Sampler
 
 if __package__ == '':
     from stts import audio, audio_util, util, textutil
