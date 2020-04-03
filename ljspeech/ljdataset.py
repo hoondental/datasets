@@ -62,6 +62,7 @@ class LJDataset(Dataset):
             fname, text, n_frame, spec_path, mel_path = t.split('|')
             if mel_path.endswith('\n'):
                 mel_path = mel_path[:-1]
+            n_frame = int(n_frame)
             self.meta.append((fname, text, n_frame, spec_path, mel_path))
             
             _spec_path = os.path.join(self.meta_dir, spec_path)

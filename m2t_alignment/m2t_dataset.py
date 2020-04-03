@@ -57,6 +57,7 @@ class Mel2TextDataset(Dataset):
             fname, n_frame, mel_path, mp_path, tp_path, m2c_path, ntext= t.split('|')
             if ntext.endswith('\n'):
                 ntext = ntext[:-1]
+            n_frame = int(n_frame)
             self.meta.append((fname, ntext, n_frame, mel_path, mp_path, tp_path, m2c_path))
             _mel_path = os.path.join(self.meta_dir, mel_path)
             _mp_path = os.path.join(self.meta_dir, mp_path)
