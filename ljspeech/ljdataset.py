@@ -174,26 +174,35 @@ class LJDataset(Dataset):
                     
         if self.tensor_type == 'torch':
             tensor = torch.tensor
+            int32 = torch.int32
+            int64 = torch.int64
+            float32 = torch.float32
         elif self.tensor_type == 'tf':
             tensor = tf.constant
+            int32 = tf.int32
+            int64 = tf.int64
+            float32 = tf.float32
         elif self.tensor_type == 'numpy':
             tensor = np.array
+            int32 = np.int32
+            int64 = np.int64
+            float32 = np.float32
         else:
             raise Exception('only torch, tf or numpy is supported')
             
-        batch = {'idx':tensor(idxes, dtype=torch.int64), 
-                 'text':tensor(texts, dtype=torch.int64), 
-                 'n_text':tensor(text_lengths, dtype=torch.int32),
-                 'n_frame':tensor(n_frames, dtype=torch.int32)}
+        batch = {'idx':tensor(idxes, dtype=int64), 
+                 'text':tensor(texts, dtype=int64), 
+                 'n_text':tensor(text_lengths, dtype=int32),
+                 'n_frame':tensor(n_frames, dtype=int32)}
         if self.use_spec:
-            batch['spec'] = tensor(specs, dtype=torch.float32)
+            batch['spec'] = tensor(specs, dtype=float32)
         if self.use_mel:
-            batch['mel'] = tensor(mels, dtype=torch.float32)
+            batch['mel'] = tensor(mels, dtype=float32)
         if self.use_phone:
-            batch['phone1'] = tensor(phones1, dtype=torch.int64)
-            batch['phone2'] = tensor(phones2, dtype=torch.int64)
-            batch['n_phone1'] = tensor(n_phones1, dtype=torch.int32)
-            batch['n_phone2'] = tensor(n_phones2, dtype=torch.int32)
+            batch['phone1'] = tensor(phones1, dtype=int64)
+            batch['phone2'] = tensor(phones2, dtype=int64)
+            batch['n_phone1'] = tensor(n_phones1, dtype=int32)
+            batch['n_phone2'] = tensor(n_phones2, dtype=int32)
         return batch
     
     def get_length_sampler(self, batch_size, noise=10.0, shuffle=True):

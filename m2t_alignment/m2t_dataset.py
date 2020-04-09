@@ -159,25 +159,34 @@ class Mel2TextDataset(Dataset):
                 
         if self.tensor_type == 'torch':
             tensor = torch.tensor
+            int32 = torch.int32
+            int64 = torch.int64
+            float32 = torch.float32
         elif self.tensor_type == 'tf':
             tensor = tf.constant
+            int32 = tf.int32
+            int64 = tf.int64
+            float32 = tf.float32
         elif self.tensor_type == 'numpy':
             tensor = np.array
+            int32 = np.int32
+            int64 = np.int64
+            float32 = np.float32
         else:
             raise Exception('only torch, tf or numpy is supported')
             
-        batch = {'idx':tensor(idxes, dtype=torch.int64), 
-                 'text':tensor(texts, dtype=torch.int64), 
-                 'n_text':tensor(n_texts, dtype=torch.int32),
-                 'n_frame':tensor(n_frames, dtype=torch.int32)}
+        batch = {'idx':tensor(idxes, dtype=int64), 
+                 'text':tensor(texts, dtype=int64), 
+                 'n_text':tensor(n_texts, dtype=int32),
+                 'n_frame':tensor(n_frames, dtype=int32)}
         if self.use_mel:
-            batch['mel'] = tensor(mels, dtype=torch.float32)
+            batch['mel'] = tensor(mels, dtype=float32)
         if self.use_mp:
-            batch['mp'] = tensor(mps, dtype=torch.float32)
+            batch['mp'] = tensor(mps, dtype=float32)
         if self.use_tp:
-            batch['tp'] = tensor(tps, dtype=torch.float32)
+            batch['tp'] = tensor(tps, dtype=float32)
         if self.use_m2c:
-            batch['m2c'] = tensor(m2cs, dtype=torch.float32)
+            batch['m2c'] = tensor(m2cs, dtype=float32)
         return batch
     
     def get_length_sampler(self, batch_size, noise=10.0, shuffle=True):
