@@ -18,6 +18,8 @@ from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.sampler import Sampler
 import random
 
+import tensorflow as tf
+
 
 if __package__ == '':
     from stts import audio, audio_util, util, textutil
@@ -27,7 +29,8 @@ else:
 
 
 class LJDataset(Dataset):
-    def __init__(self, meta_path, use_spec=True, use_mel=True, use_phone=False, stride=1, add_sos=False, add_eos=False, in_memory=False):
+    def __init__(self, meta_path, use_spec=True, use_mel=True, use_phone=False, stride=1, add_sos=False, add_eos=False, in_memory=False, 
+                tensor_type='torch'):
         self.use_spec = use_spec
         self.use_mel = use_mel
         self.use_phone = use_phone
@@ -39,6 +42,7 @@ class LJDataset(Dataset):
         self.sos = textutil._char_vocab[1]
         self.eos = textutil._char_vocab[2]
         
+        self.tensor_type = tensor_type
         self.in_memory = in_memory
         self.meta_dir = os.path.dirname(meta_path)
         self.meta_path = meta_path
@@ -167,21 +171,29 @@ class LJDataset(Dataset):
             if self.use_phone:
                 phones1.append(np.pad(s['phone1'], (0, max_n_phone1 - n_phones1[i]), constant_values=0))
                 phones2.append(np.pad(s['phone2'],((0, 0), (0, max_n_phone2 - n_phones2[i])), constant_values=0))
-                               
-                
-        batch = {'idx':torch.tensor(idxes, dtype=torch.int64), 
-                 'text':torch.tensor(texts, dtype=torch.int64), 
-                 'n_text':torch.tensor(text_lengths, dtype=torch.int32),
-                 'n_frame':torch.tensor(n_frames, dtype=torch.int32)}
+                    
+        if self.tensor_type == 'torch':
+            tensor = torch.tensor
+        elif self.tensor_type == 'tf':
+            tensor = tf.constant
+        elif self.tensor_type == 'numpy':
+            tensor = np.array
+        else:
+            raise Exception('only torch, tf or numpy is supported')
+            
+        batch = {'idx':tensor(idxes, dtype=torch.int64), 
+                 'text':tensor(texts, dtype=torch.int64), 
+                 'n_text':tensor(text_lengths, dtype=torch.int32),
+                 'n_frame':tensor(n_frames, dtype=torch.int32)}
         if self.use_spec:
-            batch['spec'] = torch.tensor(specs, dtype=torch.float32)
+            batch['spec'] = tensor(specs, dtype=torch.float32)
         if self.use_mel:
-            batch['mel'] = torch.tensor(mels, dtype=torch.float32)
+            batch['mel'] = tensor(mels, dtype=torch.float32)
         if self.use_phone:
-            batch['phone1'] = torch.tensor(phones1, dtype=torch.int64)
-            batch['phone2'] = torch.tensor(phones2, dtype=torch.int64)
-            batch['n_phone1'] = torch.tensor(n_phones1, dtype=torch.int32)
-            batch['n_phone2'] = torch.tensor(n_phones2, dtype=torch.int32)
+            batch['phone1'] = tensor(phones1, dtype=torch.int64)
+            batch['phone2'] = tensor(phones2, dtype=torch.int64)
+            batch['n_phone1'] = tensor(n_phones1, dtype=torch.int32)
+            batch['n_phone2'] = tensor(n_phones2, dtype=torch.int32)
         return batch
     
     def get_length_sampler(self, batch_size, noise=10.0, shuffle=True):

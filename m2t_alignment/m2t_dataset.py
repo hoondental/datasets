@@ -10,6 +10,8 @@ import torch, torch.nn as nn, torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.sampler import Sampler
 
+import tensorflow as tf
+
 if __package__ == '':
     from stts import audio, audio_util, util, textutil
 else:
@@ -19,7 +21,7 @@ else:
 
 class Mel2TextDataset(Dataset):
     def __init__(self, meta_path, use_mel=True, use_mp=True, use_tp=False, use_m2c=False, 
-                 stride=1, text_upsample=1, add_sos=False, add_eos=False, in_memory=False):
+                 stride=1, text_upsample=1, add_sos=False, add_eos=False, in_memory=False, tensor_type='torch'):
         self.use_mel = use_mel
         self.use_mp = use_mp
         self.use_tp = use_tp
@@ -33,6 +35,7 @@ class Mel2TextDataset(Dataset):
         self.sos = textutil._char_vocab[1]
         self.eos = textutil._char_vocab[2]
         
+        self.tensor_type = tensor_type
         self.in_memory = in_memory
         self.meta_dir = os.path.dirname(meta_path)
         self.meta_path = meta_path
@@ -154,18 +157,27 @@ class Mel2TextDataset(Dataset):
             if self.use_m2c:
                 m2cs.append(np.pad(s['m2c'], ((0, 0), (0, _mpad)), constant_values=0.0))
                 
-        batch = {'idx':torch.tensor(idxes, dtype=torch.int64), 
-                 'text':torch.tensor(texts, dtype=torch.int64), 
-                 'n_text':torch.tensor(n_texts, dtype=torch.int32),
-                 'n_frame':torch.tensor(n_frames, dtype=torch.int32)}
+        if self.tensor_type == 'torch':
+            tensor = torch.tensor
+        elif self.tensor_type == 'tf':
+            tensor = tf.constant
+        elif self.tensor_type == 'numpy':
+            tensor = np.array
+        else:
+            raise Exception('only torch, tf or numpy is supported')
+            
+        batch = {'idx':tensor(idxes, dtype=torch.int64), 
+                 'text':tensor(texts, dtype=torch.int64), 
+                 'n_text':tensor(n_texts, dtype=torch.int32),
+                 'n_frame':tensor(n_frames, dtype=torch.int32)}
         if self.use_mel:
-            batch['mel'] = torch.tensor(mels, dtype=torch.float32)
+            batch['mel'] = tensor(mels, dtype=torch.float32)
         if self.use_mp:
-            batch['mp'] = torch.tensor(mps, dtype=torch.float32)
+            batch['mp'] = tensor(mps, dtype=torch.float32)
         if self.use_tp:
-            batch['tp'] = torch.tensor(tps, dtype=torch.float32)
+            batch['tp'] = tensor(tps, dtype=torch.float32)
         if self.use_m2c:
-            batch['m2c'] = torch.tensor(m2cs, dtype=torch.float32)
+            batch['m2c'] = tensor(m2cs, dtype=torch.float32)
         return batch
     
     def get_length_sampler(self, batch_size, noise=10.0, shuffle=True):
