@@ -177,18 +177,13 @@ class LJDataset(Dataset):
             int32 = torch.int32
             int64 = torch.int64
             float32 = torch.float32
-        elif self.tensor_type == 'tf':
-            tensor = tf.constant
-            int32 = tf.int32
-            int64 = tf.int64
-            float32 = tf.float32
         elif self.tensor_type == 'numpy':
             tensor = np.array
             int32 = np.int32
             int64 = np.int64
             float32 = np.float32
         else:
-            raise Exception('only torch, tf or numpy is supported')
+            raise Exception('only torch or numpy is supported')
             
         batch = {'idx':tensor(idxes, dtype=int64), 
                  'text':tensor(texts, dtype=int64), 
@@ -234,9 +229,9 @@ class LengthSampler(Sampler):
             _rand_batch_idx = torch.randperm(_num_full_batches)
             _rand_full_idx = _full_batch_idx.reshape(_num_full_batches, self.batch_size)[_rand_batch_idx].reshape(-1) 
             _rand_idx = torch.cat([_rand_full_idx, _remnant_idx], dim=0)
-            return iter(_rand_idx)
+            return iter(list(_rand_idx.numpy()))
         else:
-            return iter(_idx)
+            return iter(list(_idx.numpy()))
 
 
 
