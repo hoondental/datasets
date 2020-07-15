@@ -4,3 +4,6 @@
 [submodule "m2t_alignment/stts"]
 	path = m2t_alignment/stts
 	url = https://github.com/hoondental/stts
+[submodule "clovacall/stts"]
+	path = clovacall/stts
+	url = https://github.com/hoondental/stts
