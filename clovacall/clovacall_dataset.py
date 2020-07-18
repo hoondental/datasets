@@ -22,11 +22,19 @@ import tensorflow as tf
 
 
 if __package__ == '':
-    from stts import audio, audio_util, util, textutil
+    from stts import audio, audio_util, util, textutil, kor_util
 else:
-    from .stts import audio, audio_util, util, textutil
+    from .stts import audio, audio_util, util, textutil, kor_util
 
-
+def _process_text(i, line, add_sos=False, add_eos=False):
+    fname, text, n_frame, spec_path, mel_path = line.strip().split('|')
+    if mel_path.endswith('\n'):
+        mel_path = mel_path[:-1]
+    n_frame = int(n_frame)
+    ntext = kor_util.text_normalize(text)
+    stext = kor_util.text2symbol(ntext, add_sos, add_eos)
+    itext = kor_util.symbol2idx(stext)
+    return (i, fname, n_frame, spec_path, mel_path, text, ntext, stext, itext)
 
 class ClovaCallDataset(Dataset):
     def __init__(self, meta_path, use_spec=True, use_mel=False, stride=1, add_sos=False, add_eos=False, in_memory=False,
@@ -35,19 +43,14 @@ class ClovaCallDataset(Dataset):
         self.use_mel = use_mel
         self.stride = stride
         
-        self.include_numbers = include_numbers
-        if include_numbers:
-            self._char_vocab = textutil._knchar_vocab
-            self.char2idx = textutil.knchar2idx
-        else:
-            self._char_vocab = textutil._kchar_vocab
-            self.char2idx = textutil.kchar2idx
+        self.util = kor_util
+        self.symbols = kor_util._symbols
         
         self.add_sos = add_sos
         self.add_eos = add_eos
-        self.pad = self._char_vocab[0]
-        self.sos = self.._char_vocab[1]
-        self.eos = self._char_vocab[2]
+        self.pad = self.symbols[0]
+        self.sos = self.symbols[1]
+        self.eos = self.symbols[2]
         
         self.tensor_type = tensor_type
         self.in_memory = in_memory
@@ -55,42 +58,38 @@ class ClovaCallDataset(Dataset):
         self.meta_path = meta_path
         
         self.meta = []
-        self._script = []
         self._text = []
+        self._ntext = []
+        self._stext = []
+        self._itext = []
         self._mel = []
         self._spec = []
         self._mel_path = []
         self._spec_path = []
         self._n_frame = []
-        
+      
+       
+        executor = ProcessPoolExecutor(max_workers=10)
+        jobs = []
         with open(meta_path, 'r') as f:
             lines = f.readlines()
-        self.len = len(lines)
-        
-        for i, t in enumerate(lines):
-            fname, text, n_frame, spec_path, mel_path = t.split('|')
-            if mel_path.endswith('\n'):
-                mel_path = mel_path[:-1]
-            n_frame = int(n_frame)
+        for i, line in enumerate(lines):
+            _partial = partial(_process_text, i, line, self.add_sos, self.add_eos)
+            job = executor.submit(_partial)
+            jobs.append(job)
+        results = [job.result() for job in tqdm(jobs)]
+
+        for i, fname, n_frame, spec_path, mel_path, text, ntext, stext, itext in results:
             self.meta.append((fname, text, n_frame, spec_path, mel_path))
-            
             _spec_path = os.path.join(self.meta_dir, spec_path)
             _mel_path = os.path.join(self.meta_dir, mel_path)
             self._spec_path.append(_spec_path)
             self._mel_path.append(_mel_path)
             self._n_frame.append(n_frame)
-            
-#            _script = textutil.text_normalize(text)
-            _text = self.char2idx(_script)
-
-            if self.add_sos:
-                _script = self.sos + _script
-                _text = [1] + _text 
-            if self.add_eos:
-                _script = self.eos + _script
-                _text = [2] + _text 
-            self._script.append(_script)
-            self._text.append(_text)
+            self._text.append(text)
+            self._ntext.append(ntext)
+            self._stext.append(stext)
+            self._itext.append(itext)
             if in_memory:
                 if use_spec:
                     _spec = np.load(_spec_path)[...,::self.stride]
@@ -98,15 +97,15 @@ class ClovaCallDataset(Dataset):
                 if use_mel:
                     _mel = np.load(_mel_path)[...,::self.stride]
                     self._mel.append(_mel)         
+                    
             
     def __len__(self):
-        return self.len
+        return len(self.meta)
     
     def __getitem__(self, idx):
         _spec_path = self._spec_path[idx]
         _mel_path = self._mel_path[idx]
-        _text = self._text[idx]
-
+        _text = self._itext[idx]
         _text = np.array(_text, dtype=np.int64)
         _n_frame = 0
         sample = {'idx':idx, 'text':_text, 'n_text':len(_text)}
@@ -123,22 +122,15 @@ class ClovaCallDataset(Dataset):
             
     def collate(self, samples):
         text_lengths = []
-        n_phones1 = []
-        n_phones2 = []
         n_frames = []
         idxes = []
         texts = []
         specs = []
         mels = []
-        phones1 = []
-        phones2 = []
         for i, s in enumerate(samples):
             text_lengths.append(s['n_text'])
             n_frames.append(s['n_frame'])
             idxes.append(s['idx'])
-            if self.use_phone:
-                n_phones1.append(s['n_phone1'])
-                n_phones2.append(s['n_phone2'])
         max_text_len = max(text_lengths)
         max_n_frame = max(n_frames)
         

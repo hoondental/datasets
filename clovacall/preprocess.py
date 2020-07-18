@@ -18,9 +18,9 @@ import torch, torch.nn as nn, torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 
 if __package__ == '':
-    from stts import audio, audio_util, util, textutil
+    from stts import audio, audio_util, util
 else:
-    from .stts import audio, audio_util, util, textutil
+    from .stts import audio, audio_util, util
 
 def main():
     parser = argparse.ArgumentParser(description='stft ClovaCall dataset to mel and linear spectrogram')
@@ -56,9 +56,9 @@ def make_metafile(dir_base, subdir_wav='wavs', metafile='meta.txt'):
                         parts = line.strip().split(',')
                         if len(parts) != 2:
                             continue
-                        _meta = (os.path.join(a[len(dir_clova)+1:], parts[0].strip()), parts[1].strip())
+                        _meta = (os.path.join(a[len(dir_base)+1:], parts[0].strip()), parts[1].strip())
                         meta.append(_meta)        
-    with open(os.path.join(dir_clova, metafile), 'w') as f:
+    with open(os.path.join(dir_base, metafile), 'w') as f:
         lines = ''
         for _meta in meta:
             lines += '|'.join(_meta) + '\n'
@@ -66,7 +66,14 @@ def make_metafile(dir_base, subdir_wav='wavs', metafile='meta.txt'):
     return meta
 
 
-def seperate_train_val(meta, dir_base, val_ratio=0.2, train_file='train_meta.txt', val_file='val_meta.txt'):
+def seperate_train_val(metafile, dir_base, val_ratio=0.2, train_file='train_meta.txt', val_file='val_meta.txt'):
+    meta = []
+    meta_path = os.path.join(dir_base, metafile)
+    with open(meta_path, 'r') as f:
+        lines = f.readlines()
+    for line in lines:
+        parts = line.strip().split('|')
+        meta.append((parts[0], parts[1]))
     _len = len(meta)
     n_val = int(_len * val_ratio)
     n_train = _len - n_val
