@@ -7,3 +7,12 @@
 [submodule "clovacall/stts"]
 	path = clovacall/stts
 	url = https://github.com/hoondental/stts
+[submodule "aihub/stts"]
+	path = aihub/stts
+	url = https://github.com/hoondental/stts
+[submodule "kdrama/stts"]
+	path = kdrama/stts
+	url = https://github.com/hoondental/stts
+[submodule "zeroth_korean/stts"]
+	path = zeroth_korean/stts
+	url = https://github.com/hoondental/stts
