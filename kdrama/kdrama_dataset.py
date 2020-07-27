@@ -117,7 +117,7 @@ class KdramaDataset(Dataset):
         _n_frame = 0
         sample = {'idx':idx, 'text':_text, 'n_text':len(_text)}
         if self.use_spec:
-            _spec = else np.load(_spec_path)[...,::self.stride]
+            _spec = np.load(_spec_path)[...,::self.stride]
             _n_frame = _spec.shape[-1]
             sample['spec'] = _spec
         if self.use_mel:

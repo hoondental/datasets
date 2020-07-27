@@ -120,7 +120,7 @@ class AihubDataset(Dataset):
             _n_frame = _spec.shape[-1]
             sample['spec'] = _spec
         if self.use_mel:
-            _mel = else np.load(_mel_path)[...,::self.stride]        
+            _mel = np.load(_mel_path)[...,::self.stride]        
             _n_frame = _mel.shape[-1]
             sample['mel'] = _mel
         sample['n_frame'] = _n_frame
