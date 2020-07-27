@@ -30,15 +30,11 @@ else:
     from .stts import audio, audio_util, util, textutil, kor_util
     from .preprocess import read_meta, save_meta, process_text
 
-def _process_text(i, line, add_sos=False, add_eos=False):
-    fname, text, n_frame, spec_path, mel_path = line.strip().split('|')
-    if mel_path.endswith('\n'):
-        mel_path = mel_path[:-1]
-    n_frame = int(n_frame)
+def _process_text(i, text, add_sos=False, add_eos=False):
     ntext = kor_util.text_normalize(text)
     stext = kor_util.text2symbol(ntext, add_sos, add_eos)
     itext = kor_util.symbol2idx(stext)
-    return (i, fname, n_frame, spec_path, mel_path, text, ntext, stext, itext)
+    return (i, text, ntext, stext, itext)
 
 class AihubDataset(Dataset):
     def __init__(self, meta_path, use_spec=True, use_mel=False, stride=1, add_sos=False, add_eos=False,
