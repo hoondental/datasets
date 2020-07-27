@@ -36,7 +36,6 @@ def _process_text(i, text, add_sos=False, add_eos=False):
     text1 = text.replace('^', ' ')
     text2 = text1.replace('\t', ' ')
     text3 = text2.replace('2+1', '2 플러스 1')
-    text3 = text3.replace('닭 키', '닥 키')
     text4 = re.sub("[ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎㄲㄸㅉㅃㅆㅏㅑㅓㅕㅗㅛㅜㅠㅡㅣㅐㅔㅒㅖㅢ]", " ", text3)
     text5 = re.sub("[木‘…@#$%&*♪`♡′♥♬♩_+]", " ", text4)
     text = text5

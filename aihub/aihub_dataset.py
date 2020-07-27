@@ -17,6 +17,7 @@ import torch, torch.nn as nn, torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.sampler import Sampler
 import random
+import re
 
 import tensorflow as tf
 
@@ -31,9 +32,28 @@ else:
     from .preprocess import read_meta, save_meta, process_text
 
 def _process_text(i, text, add_sos=False, add_eos=False):
-    ntext = kor_util.text_normalize(text)
-    stext = kor_util.text2symbol(ntext, add_sos, add_eos)
-    itext = kor_util.symbol2idx(stext)
+    _text = text
+#    text1 = text.replace('^', ' ')
+    text2 = text.replace('\t', ' ')
+#    text3 = text2.replace('2+1', '2 플러스 1')
+    text4 = re.sub("[ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎㄲㄸㅉㅃㅆㅏㅑㅓㅕㅗㅛㅜㅠㅡㅣㅐㅔㅒㅖㅢ]", " ", text2)
+#    text5 = re.sub("[木‘…@#$%&*♪`♡′♥♬♩_+]", " ", text4)
+    text = text4
+    try:
+        ntext = kor_util.text_normalize(text)
+        stext = kor_util.text2symbol(ntext, add_sos, add_eos)
+        itext = kor_util.symbol2idx(stext)
+    except Exception as ex:
+        print('i:', i)
+        print(ex)
+        print(_text)
+        print(text1)
+        print(text2)
+        print(text3)
+        print(text4)
+        print(text5)
+        print(ntext)
+        print(stext)
     return (i, text, ntext, stext, itext)
 
 class AihubDataset(Dataset):
