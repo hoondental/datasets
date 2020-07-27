@@ -21,13 +21,15 @@ import random
 
 import tensorflow as tf
 
-from preprocess import read_meta, save_meta
+
 
 
 if __package__ == '':
     from stts import audio, audio_util, util, textutil, kor_util
+    from preprocess import read_meta, save_meta
 else:
     from .stts import audio, audio_util, util, textutil, kor_util
+    from .preprocess import read_meta, save_meta
 
 def _process_text(i, text, add_sos=False, add_eos=False):
     _text = text

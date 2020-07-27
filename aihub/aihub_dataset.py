@@ -20,13 +20,15 @@ import random
 
 import tensorflow as tf
 
-from preprocess import read_meta, save_meta, process_text
+
 
 
 if __package__ == '':
     from stts import audio, audio_util, util, textutil, kor_util
+    from preprocess import read_meta, save_meta, process_text
 else:
     from .stts import audio, audio_util, util, textutil, kor_util
+    from .preprocess import read_meta, save_meta, process_text
 
 def _process_text(i, line, add_sos=False, add_eos=False):
     fname, text, n_frame, spec_path, mel_path = line.strip().split('|')
