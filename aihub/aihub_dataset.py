@@ -116,11 +116,11 @@ class AihubDataset(Dataset):
         _n_frame = 0
         sample = {'idx':idx, 'text':_text, 'n_text':len(_text)}
         if self.use_spec:
-            _spec = self._spec[idx] if self.in_memory else np.load(_spec_path)[...,::self.stride]
+            _spec = np.load(_spec_path)[...,::self.stride]
             _n_frame = _spec.shape[-1]
             sample['spec'] = _spec
         if self.use_mel:
-            _mel = self._mel[idx] if self.in_memory else np.load(_mel_path)[...,::self.stride]        
+            _mel = else np.load(_mel_path)[...,::self.stride]        
             _n_frame = _mel.shape[-1]
             sample['mel'] = _mel
         sample['n_frame'] = _n_frame
