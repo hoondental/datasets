@@ -16,3 +16,6 @@
 [submodule "zeroth_korean/stts"]
 	path = zeroth_korean/stts
 	url = https://github.com/hoondental/stts
+[submodule "kss/stts"]
+	path = kss/stts
+	url = https://github.com/hoondental/stts
