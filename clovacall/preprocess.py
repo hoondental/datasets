@@ -66,6 +66,48 @@ def make_metafile(dir_base, subdir_wav='wavs', metafile='meta.txt'):
     return meta
 
 
+def read_meta(meta_path, spec_mel=False):  
+    dir_base = os.path.dirname(meta_path)
+    with open(meta_path, 'r') as f:
+        lines = f.readlines()
+    meta = []
+    if spec_mel:
+        for line in lines:
+            wavpath, specpath, melpath, nframe, script = line.strip().split('|')
+            _nframe = int(nframe)
+            _fname = wavpath.split('/')[-1][:-4]
+            _wavpath = os.path.join(dir_base, wavpath)        
+            _specpath = os.path.join(dir_base, specpath)
+            _melpath = os.path.join(dir_base, melpath)
+            meta.append((_fname, _wavpath, _specpath, _melpath, _nframe, script))
+    else:
+        for line in lines:
+            wavpath, script = line.strip().split('|')
+            _fname = wavpath.split('/')[-1][:-4]
+            _wavpath = os.path.join(dir_base, wavpath)        
+            meta.append((_fname, _wavpath, script))
+    return meta
+
+def save_meta(meta, meta_path, spec_mel=False):
+    dir_base = os.path.dirname(meta_path)
+    with open(meta_path, 'w') as f:
+        lines = ''
+        if spec_mel:
+            for _meta in meta:
+                fname, wavpath, specpath, melpath, nframe, script = _meta
+                _wavpath = os.path.relpath(wavpath, dir_base)
+                _specpath = os.path.relpath(specpath, dir_base)
+                _melpath = os.path.relpath(melpath, dir_base)
+                _nframe = str(nframe)
+                lines += '|'.join([_wavpath, _specpath, _melpath, _nframe, script]) + '\n'            
+        else:
+            for _meta in meta:
+                fname, wavpath, script = _meta
+                _wavpath = os.path.relpath(wavpath, dir_base)
+                lines += '|'.join([_wavpath, script]) + '\n'
+        f.write(lines[:-1])
+        
+
 def seperate_train_val(metafile, dir_base, val_ratio=0.2, train_file='train_meta.txt', val_file='val_meta.txt'):
     meta = []
     meta_path = os.path.join(dir_base, metafile)

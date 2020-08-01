@@ -23,14 +23,13 @@ import re
 if __package__ == '':
     from stts import audio, audio_util, util, textutil, kor_util
     from preprocess import read_meta, save_meta
-    from stts.kor_util import _chars, _onset, _nucleus, _coda, _punctuations, _spaces, _specials, _symbols
+    from stts.kor_util import _chars, _onset, _nucleus, _coda, _punctuations, _spaces, _specials, _ksymbols
 else:
     from .stts import audio, audio_util, util, textutil, kor_util
     from .preprocess import read_meta, save_meta
-    from .stts.kor_util import _chars, _onset, _nucleus, _coda, _punctuations, _spaces, _specials, _symbols
+    from .stts.kor_util import _chars, _onset, _nucleus, _coda, _punctuations, _spaces, _specials, _ksymbols
     
-_ksymbols = _specials + _punctuations + _spaces + _onset + _nucleus + _coda
-_eksymbols = _symbols
+
 
 def _process_text(i, text, add_sos=False, add_eos=False):
     _text = text

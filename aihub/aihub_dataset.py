@@ -23,13 +23,14 @@ import tensorflow as tf
 
 
 
-
 if __package__ == '':
     from stts import audio, audio_util, util, textutil, kor_util
-    from preprocess import read_meta, save_meta, process_text
+    from preprocess import read_meta, save_meta
+    from stts.kor_util import _chars, _onset, _nucleus, _coda, _punctuations, _spaces, _specials, _ksymbols
 else:
     from .stts import audio, audio_util, util, textutil, kor_util
-    from .preprocess import read_meta, save_meta, process_text
+    from .preprocess import read_meta, save_meta
+    from .stts.kor_util import _chars, _onset, _nucleus, _coda, _punctuations, _spaces, _specials, _ksymbols
 
 def _process_text(i, text, add_sos=False, add_eos=False):
     _text = text
